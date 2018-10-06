@@ -44,7 +44,7 @@ SECTIONS
 
 	/* The data segment */
 	.data : {
-		*(.data)
+		*(.data .data.*)
 	}
 	/*
      * The uninitialized data section. NOLOAD is used to avoid
@@ -52,13 +52,14 @@ SECTIONS
      */
 	.bss(NOLOAD): {
 		PROVIDE(edata = .);
-		*(.bss)
+		*(.dynbss)
+		*(.bss .bss.*)
+		*(COMMON)
 		PROVIDE(end = .);
-		BYTE(0)
 	}
 
 
 	/DISCARD/ : {
-		*(.eh_frame .note.GNU-stack)
+		*(.eh_frame .note.GNU-stack .comment .note)
 	}
 }
