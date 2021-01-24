@@ -130,7 +130,6 @@ debuginfo_eip(uintptr_t addr, struct Eipdebuginfo *info)
 	// String table validity checks
 	if (stabstr_end <= stabstr || stabstr_end[-1] != 0)
 		return -1;
-
 	// Now we find the right stabs that define the function containing
 	// 'eip'.  First, we find the basic source file containing 'eip'.
 	// Then, we look in that source file for the function.  Then we look
@@ -142,6 +141,8 @@ debuginfo_eip(uintptr_t addr, struct Eipdebuginfo *info)
 	stab_binsearch(stabs, &lfile, &rfile, N_SO, addr);
 	if (lfile == 0)
 		return -1;
+	
+	cprintf("eip_file = %s\n", stabstr + stabs[lfile].n_strx);
 
 	// Search within that file's stabs for the function definition
 	// (N_FUN).
@@ -169,6 +170,9 @@ debuginfo_eip(uintptr_t addr, struct Eipdebuginfo *info)
 	// Ignore stuff after the colon.
 	info->eip_fn_namelen = strfind(info->eip_fn_name, ':') - info->eip_fn_name;
 
+	cprintf("eip_fn_name = %s\n", info->eip_fn_name);
+	
+	return 0;
 
 	// Search within [lline, rline] for the line number stab.
 	// If found, set info->eip_line to the right line number.
