@@ -142,8 +142,6 @@ debuginfo_eip(uintptr_t addr, struct Eipdebuginfo *info)
 	if (lfile == 0)
 		return -1;
 	
-	cprintf("eip_file = %s\n", stabstr + stabs[lfile].n_strx);
-
 	// Search within that file's stabs for the function definition
 	// (N_FUN).
 	lfun = lfile;
@@ -169,11 +167,13 @@ debuginfo_eip(uintptr_t addr, struct Eipdebuginfo *info)
 	}
 	// Ignore stuff after the colon.
 	info->eip_fn_namelen = strfind(info->eip_fn_name, ':') - info->eip_fn_name;
-
-	cprintf("eip_fn_name = %s\n", info->eip_fn_name);
 	
-	return 0;
+	char fn_name[128];
 
+	memcpy(fn_name, info->eip_fn_name, info->eip_fn_namelen);
+	fn_name[info->eip_fn_namelen] = 0;
+
+	
 	// Search within [lline, rline] for the line number stab.
 	// If found, set info->eip_line to the right line number.
 	// If not found, return -1.
@@ -184,6 +184,14 @@ debuginfo_eip(uintptr_t addr, struct Eipdebuginfo *info)
 	//	which one.
 	// Your code here.
 
+	stab_binsearch(stabs, &lline, &rline, N_SLINE, addr);
+    if (lline <= rline) {
+        info->eip_line = stabs[lline].n_desc;
+    } else {
+        return -1;
+    }
+	
+	
 
 	// Search backwards from the line number for the relevant filename
 	// stab.
@@ -205,6 +213,5 @@ debuginfo_eip(uintptr_t addr, struct Eipdebuginfo *info)
 		     lline < rfun && stabs[lline].n_type == N_PSYM;
 		     lline++)
 			info->eip_fn_narg++;
-
 	return 0;
 }

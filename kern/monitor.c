@@ -54,36 +54,69 @@ mon_kerninfo(int argc, char **argv, struct Trapframe *tf)
 	return 0;
 }
 
-int
-mon_backtrace(int argc, char **argv, struct Trapframe *tf)
+
+int mon_backtrace(int argc, char **argv, struct Trapframe *tf)
 {
-	// Your code here.
-	extern char bootstacktop[], bootstack[];
+    uint32_t *ebp;
+    struct Eipdebuginfo info;
+    int result;
 
-	struct Eipdebuginfo info;
+    ebp = (uint32_t *)read_ebp();
 
-	//cprintf("bootstack %x bootstacktop %x\n", bootstack, bootstacktop);
+    cprintf("Stack backtrace:\r\n");
 
-	unsigned int ebp;
+    while (ebp)
+    {
+        cprintf("  ebp %08x  eip %08x  args %08x %08x %08x %08x %08x\r\n", ebp, ebp[1], ebp[2], ebp[3], ebp[4], ebp[5], ebp[6]);
 
-	ebp = read_ebp();
+        memset(&info, 0, sizeof(struct Eipdebuginfo));
 
-	while (ebp) {
-		cprintf("ebp %x eip %x args %x %x %x %x %x\n", ebp, 
-												*(unsigned int *)(ebp + 4), 	// return addr
-												*(unsigned int *)(ebp + 8),		// arg1
-												*(unsigned int *)(ebp + 12),	// arg2
-												*(unsigned int *)(ebp + 16),	// arg3
-												*(unsigned int *)(ebp + 20), 	// arg4
-												*(unsigned int *)(ebp + 24));	// arg5
-		
-		debuginfo_eip(*(unsigned int *)(ebp + 4), &info);
-		
-		ebp = *(unsigned int *)ebp;
-	}
+        result = debuginfo_eip(ebp[1], &info);
+        if (0 != result)
+        {
+            cprintf("failed to get debuginfo for eip %x.\r\n", ebp[1]);
+        }
+        else
+        {
+            cprintf("\t%s:%d: %.*s+%u\r\n", info.eip_file, info.eip_line, info.eip_fn_namelen, info.eip_fn_name, ebp[1] - info.eip_fn_addr);
+        }
+
+        ebp = (uint32_t *)*ebp;
+    }
 
 	return 0;
 }
+
+// int
+// mon_backtrace(int argc, char **argv, struct Trapframe *tf)
+// {
+// 	// Your code here.
+// 	extern char bootstacktop[], bootstack[];
+
+// 	struct Eipdebuginfo info;
+
+// 	//cprintf("bootstack %x bootstacktop %x\n", bootstack, bootstacktop);
+
+// 	unsigned int ebp;
+
+// 	ebp = read_ebp();
+
+// 	while (ebp) {
+// 		cprintf("ebp %x eip %x args %x %x %x %x %x\n", ebp, 
+// 												*(unsigned int *)(ebp + 4), 	// return addr
+// 												*(unsigned int *)(ebp + 8),		// arg1
+// 												*(unsigned int *)(ebp + 12),	// arg2
+// 												*(unsigned int *)(ebp + 16),	// arg3
+// 												*(unsigned int *)(ebp + 20), 	// arg4
+// 												*(unsigned int *)(ebp + 24));	// arg5
+		
+// 		debuginfo_eip(*(unsigned int *)(ebp + 4), &info);
+		
+// 		ebp = *(unsigned int *)ebp;
+// 	}
+
+// 	return 0;
+// }
 
 
 

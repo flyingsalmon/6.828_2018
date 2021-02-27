@@ -46,8 +46,11 @@ SECTIONS
 	.data : {
 		*(.data)
 	}
-
-	.bss : {
+	/*
+     * The uninitialized data section. NOLOAD is used to avoid
+     * the "section `.bss' type changed to PROGBITS" warning
+     */
+	.bss(NOLOAD): {
 		PROVIDE(edata = .);
 		*(.bss)
 		PROVIDE(end = .);
